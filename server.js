@@ -1,6 +1,8 @@
+const crypto=require('crypto');
 const http=require('http'),fs=require('fs'),path=require('path'),{WebSocketServer}=require('ws');
-const server=http.createServer((q,r)=>{r.writeHead(200,{'content-type':'text/html; charset=utf-8'});r.end(fs.readFileSync(path.join(__dirname,'index.html')))});
-const wss=new WebSocketServer({server});const rooms={};
+const PAGE=fs.readFileSync(path.join(__dirname,'index.html'));
+const server=http.createServer((q,r)=>{if(q.url=='/health'){r.writeHead(200);return r.end('ok')}r.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache'});r.end(PAGE)});
+const wss=new WebSocketServer({server,maxPayload:4096});const rooms={};
 const val=c=>c<52?c>>2:13+c-52,srt=(a,b)=>val(a)-val(b)||a-b,lbl=c=>c<52?'3456789 10JQKA2'.match(/10|./g)[c>>2]+'♠♥♦♣'[c&3]:'★';
 function analyze(cs){const n=cs.length;if(!n)return null;const v=cs.map(val).sort((a,b)=>a-b);
  if(n==1)return{t:'single',n,r:v[0]};
@@ -12,15 +14,18 @@ function advance(s){const n=s.players.length;
  const others=s.players.map((_,i)=>i).filter(i=>active(s,i)&&i!=s.table.by);
  if(others.every(i=>s.passed.includes(i))){let i=s.table.by;while(!active(s,i))i=(i+1)%n;s.turn=i;s.table=null;s.passed=[];s.log+=' · new round'}
  else{let i=(s.turn+1)%n;while(!active(s,i)||s.passed.includes(i))i=(i+1)%n;s.turn=i}}
-function send(s){s.players.forEach((p,i)=>{if(!p.ws||p.ws.readyState!=1)return;
- p.ws.send(JSON.stringify({t:'state',scores:s.scores||null,gained:s.phase=='over'?s.gained:null,matchWin:s.matchWin>=0?s.matchWin:-1,swap:s.phase=='swap'?s.swap:null,code:s.code,phase:s.phase,me:i,turn:s.turn,table:s.table,log:s.log,hand:p.hand,
-  players:s.players.map((q,j)=>({name:q.name,n:q.hand.length,out:s.finished.includes(j),passed:s.passed.includes(j),rank:s.finished.indexOf(j)+1}))}))})}
+function send(s){const pl=s.players.map((q,j)=>({name:q.name,n:q.hand.length,out:s.finished.includes(j),passed:s.passed.includes(j),rank:s.finished.indexOf(j)+1,on:!!q.ws}));
+ const base={t:'state',scores:s.scores||null,gained:s.phase=='over'?s.gained:null,matchWin:s.matchWin>=0?s.matchWin:-1,swap:s.phase=='swap'?s.swap:null,code:s.code,phase:s.phase,turn:s.turn,table:s.table,log:s.log,players:pl};
+ s.players.forEach((p,i)=>{if(p.ws&&p.ws.readyState==1)p.ws.send(JSON.stringify({...base,me:i,hand:p.hand}))})}
 const err=(ws,m)=>ws.readyState==1&&ws.send(JSON.stringify({t:'err',m}));
-wss.on('connection',ws=>{let s=null,p=null;
- ws.on('message',raw=>{let m;try{m=JSON.parse(raw)}catch{return}
+wss.on('connection',ws=>{let s=null,p=null,tokens=40,last=Date.now();ws.alive=true;ws.on('pong',()=>ws.alive=true);
+ ws.on('message',raw=>{const now=Date.now();tokens=Math.min(40,tokens+(now-last)/50);last=now;if(--tokens<0)return;try{handle(raw)}catch(e){console.error(e)}});
+ function handle(raw){let m;try{m=JSON.parse(raw)}catch{return}
+  if(!m||typeof m!='object')return;if(m.cards!==undefined&&!(Array.isArray(m.cards)&&m.cards.length<=14&&m.cards.every(Number.isInteger)))return;if(m.card!==undefined&&!Number.isInteger(m.card))return;
   if(m.t=='join'){const code=String(m.code||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4),name=String(m.name||'').slice(0,14).trim();
    if(code.length!=4||!name||!m.pid)return err(ws,'Enter a name and a 4-letter code');
-   s=rooms[code]=rooms[code]||{code,players:[],phase:'lobby',turn:0,table:null,passed:[],finished:[],log:''};
+   if(!rooms[code]&&Object.keys(rooms).length>=300)return err(ws,'Server busy, try later');
+   s=rooms[code]=rooms[code]||{seen:Date.now(),code,players:[],phase:'lobby',turn:0,table:null,passed:[],finished:[],log:''};
    p=s.players.find(q=>q.id==m.pid);
    if(p){p.ws=ws}else{if(s.phase!='lobby'){s=null;return err(ws,'Game already in progress')}
     if(s.players.length>=4){s=null;return err(ws,'Room is full')}
@@ -29,9 +34,8 @@ wss.on('connection',ws=>{let s=null,p=null;
   if(!s||!p)return;const me=s.players.indexOf(p);
   if(m.t=='chat'){const t2=String(m.text||'').trim().slice(0,200);if(!t2)return;const o={t:'chat',from:me,text:t2};s.chat=(s.chat||[]).concat(o).slice(-40);s.players.forEach(q=>q.ws&&q.ws.readyState==1&&q.ws.send(JSON.stringify(o)));return}
   if(m.t=='emo'){if(['👏','😂','😡','🔥','😎'].includes(m.e))s.players.forEach(q=>q.ws&&q.ws.readyState==1&&q.ws.send(JSON.stringify({t:'emo',from:me,e:m.e})));return}
-  if(m.t=='start'&&me==0&&s.phase=='lobby'&&s.players.length>1){const n=s.players.length;if(!s.scores||s.scores.length!=n){s.scores=Array(n).fill(0);s.prev=null}const d=[...Array(n<4?54:52).keys()];
-   for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
-   const k=d.length/n;s.players.forEach((q,i)=>q.hand=d.slice(i*k,(i+1)*k).sort((a,b)=>val(a)-val(b)||a-b));
+  if(m.t=='start'&&me==0&&s.phase=='lobby'&&s.players.length>1){const n=s.players.length;if(!s.scores||s.scores.length!=n){s.scores=Array(n).fill(0);s.prev=null}const d=[...Array(54).keys()];for(let i=d.length-1;i>0;i--){const j=crypto.randomInt(i+1);[d[i],d[j]]=[d[j],d[i]]}
+   const o=crypto.randomInt(n);s.players.forEach(q=>q.hand=[]);d.forEach((c,i)=>s.players[(o+i)%n].hand.push(c));s.players.forEach(q=>q.hand.sort(srt));
    s.table=null;s.passed=[];s.finished=[];
    if(s.prev&&s.prev.length==n){const w=s.prev[0],l=s.prev[n-1],lh=s.players[l].hand,best=lh.reduce((x,y)=>srt(y,x)>0?y:x);lh.splice(lh.indexOf(best),1);s.players[w].hand.push(best);s.players[w].hand.sort(srt);
     s.phase='swap';s.swap={w,l,got:best};s.turn=w;s.log=s.players[l].name+' gave '+lbl(best)+' to '+s.players[w].name+' — now '+s.players[w].name+' picks a card to give back'}
@@ -47,6 +51,8 @@ wss.on('connection',ws=>{let s=null,p=null;
    if(!p.hand.length){s.finished.push(me);s.log+=' and is out (#'+s.finished.length+')'}
    const left=s.players.map((_,i)=>i).filter(i=>active(s,i));
    if(left.length<=1){if(left.length)s.finished.push(left[0]);s.phase='over';s.prev=s.finished.slice();const n2=s.players.length;s.gained=s.players.map((_,i)=>{const r=s.finished.indexOf(i)+1;return r==n2?0:4-r});s.gained.forEach((g,i)=>s.scores[i]+=g);const mx=Math.max(...s.scores);s.matchWin=(mx>=21&&s.scores.filter(x=>x==mx).length==1)?s.scores.indexOf(mx):-1}else advance(s)}
-  send(s)});
- ws.on('close',()=>{if(p)p.ws=null;if(s&&s.players.every(q=>!q.ws))setTimeout(()=>{if(s.players.every(q=>!q.ws))delete rooms[s.code]},36e5)})});
+  send(s)}
+ ws.on('close',()=>{if(p&&p.ws===ws){p.ws=null;if(s){s.seen=Date.now();send(s)}}})});
+setInterval(()=>{for(const c in rooms){const r=rooms[c];if(r.players.every(q=>!q.ws)&&Date.now()-(r.seen||0)>36e5)delete rooms[c]}},6e5);
+setInterval(()=>wss.clients.forEach(w=>{if(!w.alive)return w.terminate();w.alive=false;w.ping()}),25000);
 server.listen(process.env.PORT||3000,()=>console.log('Murlan on port '+(process.env.PORT||3000)));

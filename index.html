@@ -59,6 +59,7 @@ input{font:inherit;padding:12px;border-radius:12px;border:0;width:100%;margin:4p
 #chatp .ch{display:flex;justify-content:space-between;align-items:center}#clog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:8px 0}
 .m{max-width:80%;padding:6px 10px;border-radius:14px;background:#ffffff1f;font-size:15px;word-break:break-word;align-self:flex-start}.m small{display:block;font-weight:800;font-size:11px}.m.me{align-self:flex-end;background:#3ddc9755}
 .cin{display:flex;gap:8px}.cin input{margin:0}.bd{background:var(--rose);color:#fff;border-radius:99px;padding:0 6px;font-size:12px;margin-left:4px}
+button,.c{touch-action:manipulation;-webkit-tap-highlight-color:transparent}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 details{margin-top:8px}summary{cursor:pointer;font-weight:800}
 @keyframes glow{50%{box-shadow:0 0 18px var(--gold)}}@keyframes pop{from{transform:scale(.3) translateY(80px);opacity:0}}
 @keyframes deal{from{transform:translateY(-140px) rotate(-14deg);opacity:0}}@keyframes bob{50%{transform:translateY(-3px)}}
@@ -70,7 +71,8 @@ const val=c=>c<52?c>>2:13+c-52,red=c=>c>=52?c==53:((c&3)==1||(c&3)==2);
 const s6=[[25,8],[75,8],[25,50],[75,50],[25,92],[75,92]],s8=[[25,8],[75,8],[25,37],[75,37],[25,63],[75,63],[25,92],[75,92]];
 const PIP={2:[[50,8],[50,92]],3:[[50,8],[50,50],[50,92]],4:[[25,8],[75,8],[25,92],[75,92]],5:[[25,8],[75,8],[50,50],[25,92],[75,92]],6:s6,7:[...s6,[50,29]],8:[...s6,[50,29],[50,71]],9:[...s8,[50,50]],10:[...s8,[50,22],[50,78]]};
 const FACE={J:'🛡️',Q:'👸',K:'🤴'};
-function card(c,x=''){if(c<0)return`<div class="c back ${x}"></div>`;
+const cc=new Map();function card(c,x=''){const k=c+'|'+x;let v=cc.get(k);if(v===undefined){v=card0(c,x);cc.set(k,v)}return v}
+function card0(c,x=''){if(c<0)return`<div class="c back ${x}"></div>`;
  if(c>=52)return`<div class="c ${red(c)?'r':''} ${x}" data-c="${c}"><div class="jk"><small>JOKER</small>${c==53?'🤡':'🃏'}</div></div>`;
  const r=L[c>>2],s=S[c&3],k=`<div class="k"><span>${r}</span><i>${s}</i></div><div class="k b"><span>${r}</span><i>${s}</i></div>`;let mid;
  if(FACE[r])mid=`<div class="fc">${FACE[r]}<small>${s}</small></div>`;
@@ -90,11 +92,13 @@ function beep(f,d=.12,t='sine',v=.07,at=0){if(!snd)return;try{AC=AC||new AudioCo
 const tx=o=>ws&&ws.readyState==1&&ws.send(JSON.stringify(o));
 function float(e,i){const d=document.createElement('div');d.className='fl';d.style.left=(8+Math.random()*70)+'%';d.innerHTML=e+'<small>'+esc(st.players[i].name)+'</small>';document.body.appendChild(d);setTimeout(()=>d.remove(),2300)}
 function confetti(){for(let i=0;i<40;i++){const d=document.createElement('div');d.className='conf';d.textContent=['🎉','✨','🃏','⭐','🎊'][i%5];d.style.left=Math.random()*100+'%';d.style.animationDelay=Math.random()*1.2+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),4500)}}
-function join(){name=$('nm').value.trim();code=$('rc').value.trim().toUpperCase();localStorage.setItem('mname',name);beep(520);
- ws=new WebSocket(location.origin.replace('http','ws'));ws.onopen=()=>tx({t:'join',code,name,pid});
+function join(){name=$('nm').value.trim();code=$('rc').value.trim().toUpperCase();localStorage.setItem('mname',name);beep(520);want=true;connect()}
+let retry=0,want=false;
+function conn(ok){let d=document.getElementById('cn');if(!d){d=document.createElement('div');d.id='cn';d.style.cssText='position:fixed;top:0;left:0;right:0;text-align:center;background:#c1272d;color:#fff;font-weight:800;padding:4px;z-index:30;display:none';d.textContent='Reconnecting…';document.body.appendChild(d)}d.style.display=ok?'none':'block'}
+function connect(){ws=new WebSocket(location.origin.replace('http','ws'));ws.onopen=()=>{retry=0;chat=[];conn(1);tx({t:'join',code,name,pid})};
  ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.t=='chat'){chat.push(m);if(!chatOpen){unread++;beep(800,.06);badge()}drawChat();return}if(m.t=='emo'){float(m.e,m.from);beep(700,.08);return}
   if(m.t=='err'){err=m.m;beep(180,.2,'square',.04)}else{st=m;err='';sel=new Set([...sel].filter(c=>m.hand.includes(c)));history.replaceState(null,'','#'+m.code)}render()};
- ws.onclose=()=>{err='Connection lost — reload the page to rejoin';render()}}
+ ws.onclose=()=>{conn(0);if(want)setTimeout(connect,Math.min(8000,800*2**retry++))}}
 function render(){const a=$('app');
  if(!st){a.innerHTML=`<div class="hello">🃏</div><h1 style="text-align:center">Murlan</h1><p class="sub" style="text-align:center">The Albanian card game — play with friends</p>
  <div class="card"><label>What's your name?</label><input id="nm" maxlength="14" value="${esc(name)}" placeholder="e.g. Menelao">
@@ -112,21 +116,19 @@ function render(){const a=$('app');
   h+=`<div class="card" style="text-align:center"><b>Waiting for friends…</b><p class="sub">Send them the invite link, or the code <b>${st.code}</b></p><div class="row">${P.map((p,i)=>`<div class="seat"><div class="av" style="background:${COL[i]}">${AV[i]}</div><b>${esc(p.name)}${i==me?' (you)':''}</b></div>`).join('')}</div></div>`+
   (me==0?`<div class="row"><button class="go" id="go" ${P.length<2?'disabled':''}>${P.length<2?'Need 2+ players':'🚀 Start game'}</button></div>`:'<p class="banner">Waiting for the host to start…</p>')}
  else{
-  h+=`<div class="row seats">${P.map((p,i)=>`<div class="seat ${st.turn==i&&(st.phase=='play'||st.phase=='swap')?'turn':''} ${p.out?'out':''}">${p.passed?'<span class="tag">pass</span>':''}<div class="av" style="background:${COL[i]}">${p.out?['🥇','🥈','🥉','😅'][p.rank-1]:AV[i]}</div><b>${esc(p.name)}${i==me?' (you)':''}</b>${st.scores?`<span class="sc">⭐ ${st.scores[i]}/21</span>`:''}${p.out?'':`<span class="mini">${'<i></i>'.repeat(Math.min(p.n,5))}</span><span class="cnt">${p.n}</span>`}</div>`).join('')}</div>
+  h+=`<div class="row seats">${P.map((p,i)=>`<div class="seat ${st.turn==i&&(st.phase=='play'||st.phase=='swap')?'turn':''} ${p.out?'out':''}">${p.on===false?'<span class="tag" style="background:#666">offline</span>':p.passed?'<span class="tag">pass</span>':''}<div class="av" style="background:${COL[i]}">${p.out?['🥇','🥈','🥉','😅'][p.rank-1]:AV[i]}</div><b>${esc(p.name)}${i==me?' (you)':''}</b>${st.scores?`<span class="sc">⭐ ${st.scores[i]}/21</span>`:''}${p.out?'':`<span class="mini">${'<i></i>'.repeat(Math.min(p.n,5))}</span><span class="cnt">${p.n}</span>`}</div>`).join('')}</div>
   <div class="table"><div class="felt"><div class="pile">${pile.map((_,i)=>`<div class="c back" style="transform:translate(${((i*53)%150)-75-22}px,${((i*29)%70)-35-31}px) rotate(${((i*47)%80)-40}deg)"></div>`).join('')}</div>
   ${tb?`<div class="played">${tb.cards.map((c,i)=>`<div style="transform:rotate(${(i-(tb.cards.length-1)/2)*5}deg) translateY(${Math.abs(i-(tb.cards.length-1)/2)*3}px)">${card(c,newPlay?'pop':'')}</div>`).join('')}</div><div class="ribbon">${esc(P[tb.by].name)} played ${tb.a.t=='bomb'?'a BOMB 💣':'a '+tb.a.t}</div>`:`<div style="font-size:34px;position:relative">✨</div><div class="ribbon">${st.phase=='swap'?esc(st.log):'Table is empty — lead anything!'}</div>`}</div></div>`;
   if(st.phase=='over'){if(pphase!='over'){confetti();[523,659,784,1047].forEach((f,i)=>beep(f,.25,'triangle',.08,i*.12))}
    h+=`<div class="card" style="text-align:center"><div class="hello">🏆</div>${st.matchWin>=0?`<h2 style="color:var(--gold);margin:0">${esc(P[st.matchWin].name)} wins the match! 🎉</h2>`:'<b>Game over</b>'}<br>${P.map((p,i)=>i).sort((x,y)=>P[x].rank-P[y].rank).map(i=>['🥇','🥈','🥉','😅'][P[i].rank-1]+' '+esc(P[i].name)+' <b>+'+st.gained[i]+'</b> → ⭐ '+st.scores[i]).join('<br>')}<p class="sub">First to 21 points wins the match</p></div>`+(me==0?`<div class="row"><button class="go" id="ag">${st.matchWin>=0?'🔄 New match':'➡️ Next game'}</button></div>`:'<p class="banner">Host can start a rematch…</p>')}
   else{h+=`<div class="banner ${my||sw?'me':''}">${st.phase=='swap'?(sw?'🎁 Pick a card to give back':'⏳ '+esc(P[st.swap.w].name)+' is choosing a card…'):P[me].out?'You are out — enjoy the show 🎉':my?'👉 Your turn!':'⏳ '+esc(P[st.turn].name)+' is thinking…'}</div><div class="row hand ${dealt?'deal':''}" id="hand" style="gap:0;row-gap:8px">${st.hand.map(c=>card(c,sel.has(c)?'sel':'')).join('')}</div>`;dealt=false}}
- const A=analyze([...sel]),ok=my&&A&&beats(A,tb&&tb.a);
- const hint=sw?(sel.size>1?'Pick just one card':''):!my||!sel.size?'':!A?'🤔 Not a valid set — try a pair, triple or straight':!beats(A,tb&&tb.a)?'⬆️ Needs to beat the '+tb.a.t+' on the table':'✅ Looks good!';
- h+=`<div class="bar">${hint?`<div class="hint">${hint}</div>`:''}`+(sw?`<button class="go" id="gv" ${sel.size==1?'':'disabled'}>🎁 Give card</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:st.phase=='play'&&!P[me].out?`<button class="go" id="pl" ${ok?'':'disabled'}>▶ Play${A?' '+A.t:''}</button><button id="ps" ${my&&tb?'':'disabled'}>Pass</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:'')+['👏','😂','😡','🔥','😎'].map(e=>`<button class="sm sec em" data-e="${e}">${e}</button>`).join('')+'</div>'+`<div class="err">${esc(err)}</div>`;
- pk=key;pturn=my;pphase=st.phase;a.innerHTML=h;
+ h+=`<div class="err">${esc(err)}</div>`;
+ pk=key;pturn=my;pphase=st.phase;a.innerHTML=h;bar();
  $('cp').onclick=()=>{navigator.clipboard.writeText(location.href.split('#')[0]+'#'+st.code);$('cp').textContent='✅ Copied'};$('sn').onclick=()=>{snd=!snd;render()};$('chb').onclick=()=>{chatOpen=true;unread=0;drawChat();setTimeout(()=>$('ci').focus(),50)};badge();
  $('go')&&($('go').onclick=()=>tx({t:'start'}));$('ag')&&($('ag').onclick=()=>tx({t:'again'}));
- $('pl')&&($('pl').onclick=()=>tx({t:'play',cards:[...sel]}));$('ps')&&($('ps').onclick=()=>tx({t:'pass'}));$('gv')&&($('gv').onclick=()=>{tx({t:'give',card:[...sel][0]});sel.clear()});$('cl')&&($('cl').onclick=()=>{sel.clear();render()});
- document.querySelectorAll('.em').forEach(b=>b.onclick=()=>tx({t:'emo',e:b.dataset.e}));
- $('hand')&&($('hand').onclick=e=>{const el=e.target.closest('.c');if(!el)return;const c=+el.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);beep(sel.has(c)?600:450,.05);err='';render()})}
+ 
+ 
+ $('hand')&&($('hand').onclick=e=>{const el=e.target.closest('.c');if(!el)return;const c=+el.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);el.classList.toggle('sel',sel.has(c));beep(sel.has(c)?600:450,.05);err='';bar();const ee=document.querySelector('#app .err');if(ee)ee.textContent=''})}
 
 let chat=[],unread=0,chatOpen=false;
 const cpn=document.createElement('div');cpn.id='chatp';
@@ -138,5 +140,17 @@ function drawChat(){cpn.style.display=chatOpen?'flex':'none';const l=document.ge
 function sendChat(){const i=document.getElementById('ci'),t=i.value.trim();if(!t)return;tx({t:'chat',text:t});i.value=''}
 document.getElementById('chx').onclick=()=>{chatOpen=false;drawChat()};document.getElementById('cs').onclick=sendChat;
 document.getElementById('ci').onkeydown=e=>{if(e.key=='Enter')sendChat()};
+
+const barEl=document.createElement('div');barEl.className='bar';barEl.style.display='none';document.body.appendChild(barEl);
+const unsel=()=>{sel.clear();document.querySelectorAll('#hand .sel').forEach(e=>e.classList.remove('sel'));bar()};
+function bar(){if(!st){barEl.style.display='none';return}barEl.style.display='flex';
+ const me=st.me,P=st.players,tb=st.table,my=st.turn==me&&st.phase=='play',sw=st.phase=='swap'&&st.swap&&st.swap.w==me;
+ const A=analyze([...sel]),ok=my&&A&&beats(A,tb&&tb.a);
+ const hint=sw?(sel.size>1?'Pick just one card':''):!my||!sel.size?'':!A?'🤔 Not a valid set — try a pair, triple or straight':!beats(A,tb&&tb.a)?'⬆️ Needs to beat the '+tb.a.t+' on the table':'✅ Looks good!';
+ barEl.innerHTML=(hint?`<div class="hint">${hint}</div>`:'')+(sw?`<button class="go" id="gv" ${sel.size==1?'':'disabled'}>🎁 Give card</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:st.phase=='play'&&!P[me].out?`<button class="go" id="pl" ${ok?'':'disabled'}>▶ Play${A?' '+A.t:''}</button><button id="ps" ${my&&tb?'':'disabled'}>Pass</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:'')+['👏','😂','😡','🔥','😎'].map(e=>`<button class="sm sec em" data-e="${e}">${e}</button>`).join('');
+ const g=i=>barEl.querySelector('#'+i);
+ g('pl')&&(g('pl').onclick=()=>tx({t:'play',cards:[...sel]}));g('ps')&&(g('ps').onclick=()=>tx({t:'pass'}));
+ g('gv')&&(g('gv').onclick=()=>{tx({t:'give',card:[...sel][0]});unsel()});g('cl')&&(g('cl').onclick=unsel);
+ barEl.querySelectorAll('.em').forEach(b=>b.onclick=()=>tx({t:'emo',e:b.dataset.e}))}
 render();
 </script></body></html>
