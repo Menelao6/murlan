@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Murlan</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d3b2a;color:#f3f1e7;font:16px system-ui,sans-serif}
+#app{max-width:760px;margin:0 auto;padding:14px}h1{margin:6px 0 2px;color:#f2c14e}.sub{opacity:.75;font-size:14px;margin:0 0 12px}
+.box{background:#145a40;border-radius:14px;padding:14px;margin:10px 0}
+input{font:inherit;padding:10px;border-radius:8px;border:0;width:100%;margin:4px 0 8px}
+button{font:inherit;font-weight:600;padding:10px 16px;border:0;border-radius:10px;background:#f2c14e;color:#222;cursor:pointer}
+button.sec{background:#2d7a5a;color:#f3f1e7}button:disabled{opacity:.4}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.opp{flex:1;min-width:110px;text-align:center;padding:8px;border-radius:10px;background:#0f4632;border:2px solid transparent}.opp.turn{border-color:#f2c14e}.opp.out{opacity:.5}
+.cards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:64px}
+.c{width:44px;height:64px;border-radius:7px;background:#fbfaf4;color:#1b1b1b;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 2px 4px #0006;user-select:none}
+.c.r{color:#c62828}.hand .c{cursor:pointer}.hand .c.sel{transform:translateY(-14px);outline:3px solid #f2c14e}
+.code{font-size:26px;letter-spacing:4px;color:#f2c14e;font-weight:800}.err{color:#ffb4a8;font-size:14px;min-height:18px}
+</style></head><body><div id="app"></div><script>
+const L=['3','4','5','6','7','8','9','10','J','Q','K','A','2'],S=['♠','♥','♦','♣'];
+const lbl=c=>c<52?L[c>>2]+S[c&3]:'★',red=c=>c>=52?c==53:((c&3)==1||(c&3)==2);
+const card=(c,x='')=>`<div class="c ${red(c)?'r':''} ${x}" data-c="${c}">${lbl(c)}</div>`;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=i=>document.getElementById(i);let ws,st=null,err='',sel=new Set(),name=localStorage.getItem('mname')||'',code=location.hash.slice(1,5).toUpperCase();
+let pid=localStorage.getItem('mid');if(!pid){pid=Math.random().toString(36).slice(2);localStorage.setItem('mid',pid)}
+const tx=o=>ws&&ws.readyState==1&&ws.send(JSON.stringify(o));
+function join(){name=$('nm').value.trim();code=$('rc').value.trim().toUpperCase();localStorage.setItem('mname',name);
+ ws=new WebSocket(location.origin.replace('http','ws'));
+ ws.onopen=()=>tx({t:'join',code,name,pid});
+ ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.t=='err'){err=m.m}else{st=m;err='';sel=new Set([...sel].filter(c=>m.hand.includes(c)));history.replaceState(null,'','#'+m.code)}render()};
+ ws.onclose=()=>{err='Disconnected — reload to rejoin';render()}}
+function render(){const a=$('app'),head='<h1>Murlan</h1><p class="sub">Albanian card game · 2–4 players</p>';
+ if(!st){a.innerHTML=head+`<div class="box"><label>Your name</label><input id="nm" maxlength="14" value="${esc(name)}"><label>Room code (4 letters)</label><input id="rc" maxlength="4" value="${esc(code)}" style="text-transform:uppercase">
+ <div class="row"><button id="j">Join / create room</button><button class="sec" id="r">Random code</button></div><div class="err">${esc(err)}</div></div>
+ <div class="box sub">Play a single, pair, triple or straight (3+ in a row, up to A) that beats the table with the same count. Four of a kind is a bomb. Order: 3…K, A, 2, ★. Everyone else passes → last player leads. First out wins. 3♥ starts.</div>`;
+  $('j').onclick=join;$('r').onclick=()=>$('rc').value=Array.from({length:4},()=>String.fromCharCode(65+Math.random()*26|0)).join('');return}
+ const me=st.me,P=st.players;let h=head+`<div class="box row" style="justify-content:space-between"><div>Room <span class="code">${st.code}</span></div><button class="sec" id="cp">Copy invite link</button></div>`;
+ if(st.phase=='lobby'){h+=`<div class="box"><b>Players (${P.length}/4)</b><br>${P.map((p,i)=>esc(p.name)+(i==me?' (you)':'')).join('<br>')}</div>`+(me==0?`<button id="go" ${P.length<2?'disabled':''}>Start game</button>`:'<p class="sub">Waiting for the host…</p>')}
+ else{h+=`<div class="row">${P.map((p,i)=>`<div class="opp ${st.turn==i&&st.phase=='play'?'turn':''} ${p.out?'out':''}"><b>${esc(p.name)}${i==me?' (you)':''}</b><br>${p.out?'#'+p.rank+' finished':p.n+' cards'}${p.passed?'<br><i>passed</i>':''}</div>`).join('')}</div>
+ <div class="box" style="text-align:center;min-height:110px">${st.table?`<div class="cards">${st.table.cards.map(c=>card(c)).join('')}</div><div class="sub">${esc(P[st.table.by].name)}'s ${st.table.a.t}</div>`:'<div class="sub" style="margin-top:36px">Table is empty — lead anything</div>'}<div class="sub">${esc(st.log)}</div></div>`;
+  if(st.phase=='over')h+=`<div class="box"><b>Final ranking</b><br>${P.map((p,i)=>[p.rank,p.name]).sort((x,y)=>x[0]-y[0]).map(r=>r[0]+'. '+esc(r[1])).join('<br>')}</div>`+(me==0?'<button id="ag">Play again</button>':'');
+  else{const my=st.turn==me;h+=`<div class="box"><div class="sub">${P[me].out?'You are out 🎉':my?'<b style="color:#f2c14e">Your turn</b>':'Waiting for '+esc(P[st.turn].name)+'…'}</div><div class="cards hand" id="hand" style="padding-top:16px">${st.hand.map(c=>card(c,sel.has(c)?'sel':'')).join('')}</div>
+  <div class="row" style="justify-content:center;margin-top:12px"><button id="pl" ${my&&sel.size?'':'disabled'}>Play</button><button class="sec" id="ps" ${my&&st.table?'':'disabled'}>Pass</button></div></div>`}}
+ a.innerHTML=h+`<div class="err" style="text-align:center">${esc(err)}</div>`;
+ $('cp').onclick=()=>{navigator.clipboard.writeText(location.href.split('#')[0]+'#'+st.code);$('cp').textContent='Copied!'};
+ $('go')&&($('go').onclick=()=>tx({t:'start'}));$('ag')&&($('ag').onclick=()=>tx({t:'again'}));
+ $('pl')&&($('pl').onclick=()=>tx({t:'play',cards:[...sel]}));$('ps')&&($('ps').onclick=()=>tx({t:'pass'}));
+ $('hand')&&($('hand').onclick=e=>{const el=e.target.closest('.c');if(!el)return;const c=+el.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);render()})}
+render();
+</script></body></html>
