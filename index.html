@@ -1,46 +1,142 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Murlan</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Murlan 🃏</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#0d3b2a;color:#f3f1e7;font:16px system-ui,sans-serif}
-#app{max-width:760px;margin:0 auto;padding:14px}h1{margin:6px 0 2px;color:#f2c14e}.sub{opacity:.75;font-size:14px;margin:0 0 12px}
-.box{background:#145a40;border-radius:14px;padding:14px;margin:10px 0}
-input{font:inherit;padding:10px;border-radius:8px;border:0;width:100%;margin:4px 0 8px}
-button{font:inherit;font-weight:600;padding:10px 16px;border:0;border-radius:10px;background:#f2c14e;color:#222;cursor:pointer}
-button.sec{background:#2d7a5a;color:#f3f1e7}button:disabled{opacity:.4}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.opp{flex:1;min-width:110px;text-align:center;padding:8px;border-radius:10px;background:#0f4632;border:2px solid transparent}.opp.turn{border-color:#f2c14e}.opp.out{opacity:.5}
-.cards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:64px}
-.c{width:44px;height:64px;border-radius:7px;background:#fbfaf4;color:#1b1b1b;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 2px 4px #0006;user-select:none}
-.c.r{color:#c62828}.hand .c{cursor:pointer}.hand .c.sel{transform:translateY(-14px);outline:3px solid #f2c14e}
-.code{font-size:26px;letter-spacing:4px;color:#f2c14e;font-weight:800}.err{color:#ffb4a8;font-size:14px;min-height:18px}
+:root{--gold:#ffd166;--ink:#fff8e7;--mint:#3ddc97;--rose:#ff6b6b;--w:62px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 0,#3a2a1c 0,#1d140d 70%) fixed;color:var(--ink);font:16px/1.35 "Trebuchet MS",system-ui,sans-serif}
+#app{max-width:860px;margin:0 auto;padding:12px 12px 100px}
+h1{margin:0;font-size:30px;color:var(--gold);text-shadow:0 2px 0 #0006}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.pill{background:#0007;border-radius:99px;padding:6px 12px;font-weight:700;letter-spacing:2px}
+button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 20px;cursor:pointer;background:var(--gold);color:#3a2a00;box-shadow:0 4px 0 #b88a1a;transition:transform .08s}
+button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #b88a1a}
+button.go{background:var(--mint);box-shadow:0 4px 0 #1f9d6a;color:#04301f}
+button.sec{background:#ffffff22;box-shadow:0 4px 0 #0005;color:var(--ink)}button.sm{padding:6px 12px;font-size:14px;border-radius:99px}
+button:disabled{opacity:.35;cursor:default}
+.card{background:#0005;border-radius:20px;padding:16px;margin:12px 0}
+input{font:inherit;padding:12px;border-radius:12px;border:0;width:100%;margin:4px 0 10px;background:#fff8e7;color:#222}
+.hello{text-align:center;font-size:44px}.sub{opacity:.8;font-size:14px}.err{color:#ffc4c4;text-align:center;min-height:20px;font-weight:700}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+/* seats */
+.seats{position:relative;z-index:3;margin-bottom:-22px}
+.seat{flex:1;min-width:92px;max-width:170px;text-align:center;padding:8px 6px;border-radius:16px;background:#000a;border:3px solid transparent;position:relative}
+.seat.turn{border-color:var(--gold);animation:glow 1.2s infinite}.seat.out{opacity:.55}
+.av{width:44px;height:44px;border-radius:50%;margin:0 auto 2px;display:flex;align-items:center;justify-content:center;font-size:25px;box-shadow:0 3px 0 #0005}
+.seat b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{display:inline-flex;vertical-align:middle;margin-right:6px}.mini i{width:11px;height:16px;border-radius:2px;margin-left:-6px;border:1px solid #fffdf5;background:repeating-linear-gradient(45deg,#c1272d 0 2px,#8f1a26 2px 4px)}.mini i:first-child{margin-left:0}
+.cnt{font-weight:800;font-size:13px;background:#fff8e7;color:#222;border-radius:8px;padding:0 7px}
+.tag{position:absolute;top:-9px;right:-4px;background:var(--rose);color:#fff;border-radius:99px;padding:0 8px;font-size:11px;font-weight:800}
+/* table */
+.table{position:relative;margin:0 0 6px;padding:16px;border-radius:50%/46%;background:linear-gradient(#9a6535,#5a3512 60%,#3f230b);box-shadow:0 10px 0 #2b1706,0 24px 30px #000a,inset 0 2px 0 #ffffff44}
+.felt{position:relative;overflow:hidden;min-height:230px;padding:30px 30px 22px;border-radius:50%/46%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background:radial-gradient(ellipse at 50% 40%,#2fa577,#1c6e4e 60%,#124a35),repeating-radial-gradient(circle at 30% 30%,#0000 0 2px,#0000000d 2px 3px);box-shadow:inset 0 0 60px #000b,inset 0 0 0 3px #ffd16655}
+.felt::before{content:"MURLAN";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:900 54px Georgia,serif;letter-spacing:10px;color:#ffffff0f;pointer-events:none}
+.pile{position:absolute;left:50%;top:50%}.pile .c{position:absolute;--w:44px;margin:0;left:0;top:0;opacity:.85}
+.played{position:relative;z-index:2;display:flex;justify-content:center}
+.played>div{margin-left:calc(var(--w)*-.3)}.played>div:first-child{margin-left:0}.played .c,.played .c:first-child{margin-left:0;box-shadow:0 5px 8px #0009}
+.ribbon{position:relative;z-index:2;margin-top:10px;background:#000a;border-radius:99px;padding:3px 14px;font-size:13px;font-weight:700}
+/* cards */
+.c{width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.1);background:linear-gradient(150deg,#fff,#f3ecda);border:1px solid #c9bfa3;box-shadow:0 2px 5px #0008;position:relative;color:#1c1c1c;flex:none;margin-left:calc(var(--w)*-.5);user-select:none;font-family:Georgia,serif}
+.c:first-child{margin-left:0}.c.r{color:#d0202e}
+.k{position:absolute;left:6%;top:3%;display:flex;flex-direction:column;align-items:center;line-height:1;font-weight:800;font-size:calc(var(--w)*.27)}
+.k i{font-style:normal;font-size:.85em}.k.b{left:auto;top:auto;right:6%;bottom:3%;transform:rotate(180deg)}
+.fa{position:absolute;left:22%;right:22%;top:12%;bottom:12%}
+.pp{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--w)*.26);line-height:1}.pp.f{transform:translate(-50%,-50%) rotate(180deg)}
+.pp.big{font-size:calc(var(--w)*.62);left:50%;top:50%}
+.fc{position:absolute;left:20%;right:20%;top:12%;bottom:12%;border:2px solid currentColor;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--w)*.4);background:linear-gradient(135deg,#ffe8a3,#fff6d8 50%,#ffe8a3);box-shadow:inset 0 0 0 2px #fff}
+.fc small{position:absolute;font-size:calc(var(--w)*.2);bottom:2px;right:3px}
+.jk{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:calc(var(--w)*.5)}.jk small{font:800 calc(var(--w)*.15) system-ui;letter-spacing:1px;writing-mode:vertical-rl;position:absolute;left:8%;top:30%}
+.c.back{background:repeating-linear-gradient(45deg,#c1272d 0 4px,#8f1a26 4px 8px);border:3px solid #fffdf5;outline:1px solid #c9bfa3}
+.hand{padding-top:26px;row-gap:8px;margin-top:6px}.hand .c{cursor:pointer;transition:transform .12s}.hand .c:hover{transform:translateY(-8px)}
+.hand .c.sel{transform:translateY(-24px);box-shadow:0 0 0 3px var(--gold),0 10px 14px #000a}.hand.deal .c{animation:deal .5s backwards}
+.pop{animation:pop .35s cubic-bezier(.3,1.5,.5,1)}
+.banner{text-align:center;font-size:20px;font-weight:800;margin:10px 0 0;min-height:30px}.banner.me{color:var(--gold);animation:bob 1s infinite}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:#140d08ee;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:5}
+.hint{width:100%;text-align:center;font-size:13px;opacity:.9;margin-top:-4px}
+.fl{position:fixed;bottom:100px;pointer-events:none;animation:fly 2.2s forwards;z-index:9;text-align:center;font-size:36px}.fl small{display:block;font-size:12px;font-weight:800}
+.conf{position:fixed;top:-30px;font-size:26px;pointer-events:none;animation:fall 3s linear forwards;z-index:9}
+#chatp{position:fixed;left:0;right:0;bottom:0;height:60vh;max-height:480px;max-width:520px;margin:0 auto;background:#1d140dfa;border-radius:20px 20px 0 0;z-index:20;display:none;flex-direction:column;padding:12px;box-shadow:0 -8px 30px #000a}
+#chatp .ch{display:flex;justify-content:space-between;align-items:center}#clog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.m{max-width:80%;padding:6px 10px;border-radius:14px;background:#ffffff1f;font-size:15px;word-break:break-word;align-self:flex-start}.m small{display:block;font-weight:800;font-size:11px}.m.me{align-self:flex-end;background:#3ddc9755}
+.cin{display:flex;gap:8px}.cin input{margin:0}.bd{background:var(--rose);color:#fff;border-radius:99px;padding:0 6px;font-size:12px;margin-left:4px}
+details{margin-top:8px}summary{cursor:pointer;font-weight:800}
+@keyframes glow{50%{box-shadow:0 0 18px var(--gold)}}@keyframes pop{from{transform:scale(.3) translateY(80px);opacity:0}}
+@keyframes deal{from{transform:translateY(-140px) rotate(-14deg);opacity:0}}@keyframes bob{50%{transform:translateY(-3px)}}
+@keyframes fly{to{transform:translateY(-240px);opacity:0}}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media(max-width:520px){:root{--w:52px}.felt{padding:24px 18px 18px;min-height:200px}.felt::before{font-size:34px}.table{padding:10px}}
 </style></head><body><div id="app"></div><script>
-const L=['3','4','5','6','7','8','9','10','J','Q','K','A','2'],S=['♠','♥','♦','♣'];
-const lbl=c=>c<52?L[c>>2]+S[c&3]:'★',red=c=>c>=52?c==53:((c&3)==1||(c&3)==2);
-const card=(c,x='')=>`<div class="c ${red(c)?'r':''} ${x}" data-c="${c}">${lbl(c)}</div>`;
+const L=['3','4','5','6','7','8','9','10','J','Q','K','A','2'],S=['♠','♥','♦','♣'],AV=['🦊','🐼','🐸','🦁'],COL=['#ff9f43','#54a0ff','#5fd38d','#ff6b9d'];
+const val=c=>c<52?c>>2:13+c-52,red=c=>c>=52?c==53:((c&3)==1||(c&3)==2);
+const s6=[[25,8],[75,8],[25,50],[75,50],[25,92],[75,92]],s8=[[25,8],[75,8],[25,37],[75,37],[25,63],[75,63],[25,92],[75,92]];
+const PIP={2:[[50,8],[50,92]],3:[[50,8],[50,50],[50,92]],4:[[25,8],[75,8],[25,92],[75,92]],5:[[25,8],[75,8],[50,50],[25,92],[75,92]],6:s6,7:[...s6,[50,29]],8:[...s6,[50,29],[50,71]],9:[...s8,[50,50]],10:[...s8,[50,22],[50,78]]};
+const FACE={J:'🛡️',Q:'👸',K:'🤴'};
+function card(c,x=''){if(c<0)return`<div class="c back ${x}"></div>`;
+ if(c>=52)return`<div class="c ${red(c)?'r':''} ${x}" data-c="${c}"><div class="jk"><small>JOKER</small>${c==53?'🤡':'🃏'}</div></div>`;
+ const r=L[c>>2],s=S[c&3],k=`<div class="k"><span>${r}</span><i>${s}</i></div><div class="k b"><span>${r}</span><i>${s}</i></div>`;let mid;
+ if(FACE[r])mid=`<div class="fc">${FACE[r]}<small>${s}</small></div>`;
+ else if(r=='A')mid=`<span class="pp big">${s}</span>`;
+ else mid=`<div class="fa">${PIP[+r].map(p=>`<span class="pp ${p[1]>50?'f':''}" style="left:${p[0]}%;top:${p[1]}%">${s}</span>`).join('')}</div>`;
+ return`<div class="c ${red(c)?'r':''} ${x}" data-c="${c}">${k}${mid}</div>`}
+function analyze(cs){const n=cs.length;if(!n)return null;const v=cs.map(val).sort((a,b)=>a-b);
+ if(n==1)return{t:'single',n,r:v[0]};
+ if(v[n-1]<13&&v.every(x=>x==v[0])&&n<=4)return{t:n==4?'bomb':n==2?'pair':'triple',n,r:v[0]};
+ if(n>=3&&v[n-1]<=11&&v.every((x,i)=>x==v[0]+i))return{t:'straight',n,r:v[n-1]};return null}
+const beats=(a,t)=>!t||(a.t=='bomb'&&t.t!='bomb')||(a.t==t.t&&a.n==t.n&&a.r>t.r);
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const $=i=>document.getElementById(i);let ws,st=null,err='',sel=new Set(),name=localStorage.getItem('mname')||'',code=location.hash.slice(1,5).toUpperCase();
-let pid=localStorage.getItem('mid');if(!pid){pid=Math.random().toString(36).slice(2);localStorage.setItem('mid',pid)}
+const $=i=>document.getElementById(i);let ws,st=null,err='',sel=new Set(),snd=true,AC,pk='',pturn=false,pphase='',dealt=false,pile=[],pn=0;
+let name=localStorage.getItem('mname')||'',code=location.hash.slice(1,5).toUpperCase(),pid=localStorage.getItem('mid');
+if(!pid){pid=Math.random().toString(36).slice(2);localStorage.setItem('mid',pid)}
+function beep(f,d=.12,t='sine',v=.07,at=0){if(!snd)return;try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain(),T=AC.currentTime+at;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,T);g.gain.exponentialRampToValueAtTime(.001,T+d);o.connect(g);g.connect(AC.destination);o.start(T);o.stop(T+d)}catch(e){}}
 const tx=o=>ws&&ws.readyState==1&&ws.send(JSON.stringify(o));
-function join(){name=$('nm').value.trim();code=$('rc').value.trim().toUpperCase();localStorage.setItem('mname',name);
- ws=new WebSocket(location.origin.replace('http','ws'));
- ws.onopen=()=>tx({t:'join',code,name,pid});
- ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.t=='err'){err=m.m}else{st=m;err='';sel=new Set([...sel].filter(c=>m.hand.includes(c)));history.replaceState(null,'','#'+m.code)}render()};
- ws.onclose=()=>{err='Disconnected — reload to rejoin';render()}}
-function render(){const a=$('app'),head='<h1>Murlan</h1><p class="sub">Albanian card game · 2–4 players</p>';
- if(!st){a.innerHTML=head+`<div class="box"><label>Your name</label><input id="nm" maxlength="14" value="${esc(name)}"><label>Room code (4 letters)</label><input id="rc" maxlength="4" value="${esc(code)}" style="text-transform:uppercase">
- <div class="row"><button id="j">Join / create room</button><button class="sec" id="r">Random code</button></div><div class="err">${esc(err)}</div></div>
- <div class="box sub">Play a single, pair, triple or straight (3+ in a row, up to A) that beats the table with the same count. Four of a kind is a bomb. Order: 3…K, A, 2, ★. Everyone else passes → last player leads. First out wins. 3♥ starts.</div>`;
+function float(e,i){const d=document.createElement('div');d.className='fl';d.style.left=(8+Math.random()*70)+'%';d.innerHTML=e+'<small>'+esc(st.players[i].name)+'</small>';document.body.appendChild(d);setTimeout(()=>d.remove(),2300)}
+function confetti(){for(let i=0;i<40;i++){const d=document.createElement('div');d.className='conf';d.textContent=['🎉','✨','🃏','⭐','🎊'][i%5];d.style.left=Math.random()*100+'%';d.style.animationDelay=Math.random()*1.2+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),4500)}}
+function join(){name=$('nm').value.trim();code=$('rc').value.trim().toUpperCase();localStorage.setItem('mname',name);beep(520);
+ ws=new WebSocket(location.origin.replace('http','ws'));ws.onopen=()=>tx({t:'join',code,name,pid});
+ ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.t=='chat'){chat.push(m);if(!chatOpen){unread++;beep(800,.06);badge()}drawChat();return}if(m.t=='emo'){float(m.e,m.from);beep(700,.08);return}
+  if(m.t=='err'){err=m.m;beep(180,.2,'square',.04)}else{st=m;err='';sel=new Set([...sel].filter(c=>m.hand.includes(c)));history.replaceState(null,'','#'+m.code)}render()};
+ ws.onclose=()=>{err='Connection lost — reload the page to rejoin';render()}}
+function render(){const a=$('app');
+ if(!st){a.innerHTML=`<div class="hello">🃏</div><h1 style="text-align:center">Murlan</h1><p class="sub" style="text-align:center">The Albanian card game — play with friends</p>
+ <div class="card"><label>What's your name?</label><input id="nm" maxlength="14" value="${esc(name)}" placeholder="e.g. Menelao">
+ <label>Room code</label><input id="rc" maxlength="4" value="${esc(code)}" placeholder="4 letters, e.g. FUNN" style="text-transform:uppercase">
+ <div class="row"><button class="go" id="j">Let's play!</button><button class="sec" id="r">🎲 Random code</button></div><div class="err">${esc(err)}</div></div>
+ <div class="card"><details><summary>📖 How to play</summary><p class="sub">Beat the cards on the table with the same kind of set: a <b>single</b>, <b>pair</b>, <b>triple</b>, or a <b>straight</b> (3+ in a row, up to A). <b>Four of a kind</b> is a bomb 💣 that beats anything. Order: 3 → K, A, 2, jokers. If everyone passes, the last player leads again. First to empty their hand wins! 3♥ starts.</p></details></div>`;
   $('j').onclick=join;$('r').onclick=()=>$('rc').value=Array.from({length:4},()=>String.fromCharCode(65+Math.random()*26|0)).join('');return}
- const me=st.me,P=st.players;let h=head+`<div class="box row" style="justify-content:space-between"><div>Room <span class="code">${st.code}</span></div><button class="sec" id="cp">Copy invite link</button></div>`;
- if(st.phase=='lobby'){h+=`<div class="box"><b>Players (${P.length}/4)</b><br>${P.map((p,i)=>esc(p.name)+(i==me?' (you)':'')).join('<br>')}</div>`+(me==0?`<button id="go" ${P.length<2?'disabled':''}>Start game</button>`:'<p class="sub">Waiting for the host…</p>')}
- else{h+=`<div class="row">${P.map((p,i)=>`<div class="opp ${st.turn==i&&st.phase=='play'?'turn':''} ${p.out?'out':''}"><b>${esc(p.name)}${i==me?' (you)':''}</b><br>${p.out?'#'+p.rank+' finished':p.n+' cards'}${p.passed?'<br><i>passed</i>':''}</div>`).join('')}</div>
- <div class="box" style="text-align:center;min-height:110px">${st.table?`<div class="cards">${st.table.cards.map(c=>card(c)).join('')}</div><div class="sub">${esc(P[st.table.by].name)}'s ${st.table.a.t}</div>`:'<div class="sub" style="margin-top:36px">Table is empty — lead anything</div>'}<div class="sub">${esc(st.log)}</div></div>`;
-  if(st.phase=='over')h+=`<div class="box"><b>Final ranking</b><br>${P.map((p,i)=>[p.rank,p.name]).sort((x,y)=>x[0]-y[0]).map(r=>r[0]+'. '+esc(r[1])).join('<br>')}</div>`+(me==0?'<button id="ag">Play again</button>':'');
-  else{const my=st.turn==me;h+=`<div class="box"><div class="sub">${P[me].out?'You are out 🎉':my?'<b style="color:#f2c14e">Your turn</b>':'Waiting for '+esc(P[st.turn].name)+'…'}</div><div class="cards hand" id="hand" style="padding-top:16px">${st.hand.map(c=>card(c,sel.has(c)?'sel':'')).join('')}</div>
-  <div class="row" style="justify-content:center;margin-top:12px"><button id="pl" ${my&&sel.size?'':'disabled'}>Play</button><button class="sec" id="ps" ${my&&st.table?'':'disabled'}>Pass</button></div></div>`}}
- a.innerHTML=h+`<div class="err" style="text-align:center">${esc(err)}</div>`;
- $('cp').onclick=()=>{navigator.clipboard.writeText(location.href.split('#')[0]+'#'+st.code);$('cp').textContent='Copied!'};
+ const me=st.me,P=st.players,my=st.turn==me&&st.phase=='play',tb=st.table,key=tb?tb.by+':'+tb.cards.join():'';const sw=st.phase=='swap'&&st.swap&&st.swap.w==me;
+ if((st.phase=='play'||st.phase=='swap')&&pphase!='play'&&pphase!='swap'){pile=[];pn=0;dealt=true;beep(300,.08,'triangle');beep(450,.08,'triangle',.07,.1)}
+ const newPlay=!!key&&key!=pk;
+ if(key!=pk){if(!tb){pile=[]}else if(pn)pile=pile.concat(Array(pn).fill(0)).slice(-16);pn=tb?tb.cards.length:0;if(tb)beep(tb.a.t=='bomb'?120:380,.15,tb.a.t=='bomb'?'sawtooth':'triangle',.09)}
+ if(my&&!pturn){beep(660,.1,'sine',.08);beep(880,.15,'sine',.08,.1)}
+ let h=`<div class="top"><h1>🃏 Murlan</h1><div class="row"><span class="pill">${st.code}</span><button class="sm sec" id="cp">🔗 Invite</button><button class="sm sec" id="chb">💬<span id="chn"></span></button><button class="sm sec" id="sn">${snd?'🔊':'🔇'}</button></div></div>`;
+ if(st.phase=='lobby'){
+  h+=`<div class="card" style="text-align:center"><b>Waiting for friends…</b><p class="sub">Send them the invite link, or the code <b>${st.code}</b></p><div class="row">${P.map((p,i)=>`<div class="seat"><div class="av" style="background:${COL[i]}">${AV[i]}</div><b>${esc(p.name)}${i==me?' (you)':''}</b></div>`).join('')}</div></div>`+
+  (me==0?`<div class="row"><button class="go" id="go" ${P.length<2?'disabled':''}>${P.length<2?'Need 2+ players':'🚀 Start game'}</button></div>`:'<p class="banner">Waiting for the host to start…</p>')}
+ else{
+  h+=`<div class="row seats">${P.map((p,i)=>`<div class="seat ${st.turn==i&&(st.phase=='play'||st.phase=='swap')?'turn':''} ${p.out?'out':''}">${p.passed?'<span class="tag">pass</span>':''}<div class="av" style="background:${COL[i]}">${p.out?['🥇','🥈','🥉','😅'][p.rank-1]:AV[i]}</div><b>${esc(p.name)}${i==me?' (you)':''}</b>${p.out?'':`<span class="mini">${'<i></i>'.repeat(Math.min(p.n,5))}</span><span class="cnt">${p.n}</span>`}</div>`).join('')}</div>
+  <div class="table"><div class="felt"><div class="pile">${pile.map((_,i)=>`<div class="c back" style="transform:translate(${((i*53)%150)-75-22}px,${((i*29)%70)-35-31}px) rotate(${((i*47)%80)-40}deg)"></div>`).join('')}</div>
+  ${tb?`<div class="played">${tb.cards.map((c,i)=>`<div style="transform:rotate(${(i-(tb.cards.length-1)/2)*5}deg) translateY(${Math.abs(i-(tb.cards.length-1)/2)*3}px)">${card(c,newPlay?'pop':'')}</div>`).join('')}</div><div class="ribbon">${esc(P[tb.by].name)} played ${tb.a.t=='bomb'?'a BOMB 💣':'a '+tb.a.t}</div>`:`<div style="font-size:34px;position:relative">✨</div><div class="ribbon">${st.phase=='swap'?esc(st.log):'Table is empty — lead anything!'}</div>`}</div></div>`;
+  if(st.phase=='over'){if(pphase!='over'){confetti();[523,659,784,1047].forEach((f,i)=>beep(f,.25,'triangle',.08,i*.12))}
+   h+=`<div class="card" style="text-align:center"><div class="hello">🏆</div><b>Final ranking</b><br>${P.map(p=>[p.rank,p.name]).sort((x,y)=>x[0]-y[0]).map(r=>['🥇','🥈','🥉','😅'][r[0]-1]+' '+esc(r[1])).join('<br>')}</div>`+(me==0?'<div class="row"><button class="go" id="ag">🔄 Play again</button></div>':'<p class="banner">Host can start a rematch…</p>')}
+  else{h+=`<div class="banner ${my||sw?'me':''}">${st.phase=='swap'?(sw?'🎁 Pick a card to give back':'⏳ '+esc(P[st.swap.w].name)+' is choosing a card…'):P[me].out?'You are out — enjoy the show 🎉':my?'👉 Your turn!':'⏳ '+esc(P[st.turn].name)+' is thinking…'}</div><div class="row hand ${dealt?'deal':''}" id="hand" style="gap:0;row-gap:8px">${st.hand.map(c=>card(c,sel.has(c)?'sel':'')).join('')}</div>`;dealt=false}}
+ const A=analyze([...sel]),ok=my&&A&&beats(A,tb&&tb.a);
+ const hint=sw?(sel.size>1?'Pick just one card':''):!my||!sel.size?'':!A?'🤔 Not a valid set — try a pair, triple or straight':!beats(A,tb&&tb.a)?'⬆️ Needs to beat the '+tb.a.t+' on the table':'✅ Looks good!';
+ h+=`<div class="bar">${hint?`<div class="hint">${hint}</div>`:''}`+(sw?`<button class="go" id="gv" ${sel.size==1?'':'disabled'}>🎁 Give card</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:st.phase=='play'&&!P[me].out?`<button class="go" id="pl" ${ok?'':'disabled'}>▶ Play${A?' '+A.t:''}</button><button id="ps" ${my&&tb?'':'disabled'}>Pass</button><button class="sec" id="cl" ${sel.size?'':'disabled'}>Clear</button>`:'')+['👏','😂','😡','🔥','😎'].map(e=>`<button class="sm sec em" data-e="${e}">${e}</button>`).join('')+'</div>'+`<div class="err">${esc(err)}</div>`;
+ pk=key;pturn=my;pphase=st.phase;a.innerHTML=h;
+ $('cp').onclick=()=>{navigator.clipboard.writeText(location.href.split('#')[0]+'#'+st.code);$('cp').textContent='✅ Copied'};$('sn').onclick=()=>{snd=!snd;render()};$('chb').onclick=()=>{chatOpen=true;unread=0;drawChat();setTimeout(()=>$('ci').focus(),50)};badge();
  $('go')&&($('go').onclick=()=>tx({t:'start'}));$('ag')&&($('ag').onclick=()=>tx({t:'again'}));
- $('pl')&&($('pl').onclick=()=>tx({t:'play',cards:[...sel]}));$('ps')&&($('ps').onclick=()=>tx({t:'pass'}));
- $('hand')&&($('hand').onclick=e=>{const el=e.target.closest('.c');if(!el)return;const c=+el.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);render()})}
+ $('pl')&&($('pl').onclick=()=>tx({t:'play',cards:[...sel]}));$('ps')&&($('ps').onclick=()=>tx({t:'pass'}));$('gv')&&($('gv').onclick=()=>{tx({t:'give',card:[...sel][0]});sel.clear()});$('cl')&&($('cl').onclick=()=>{sel.clear();render()});
+ document.querySelectorAll('.em').forEach(b=>b.onclick=()=>tx({t:'emo',e:b.dataset.e}));
+ $('hand')&&($('hand').onclick=e=>{const el=e.target.closest('.c');if(!el)return;const c=+el.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);beep(sel.has(c)?600:450,.05);err='';render()})}
+
+let chat=[],unread=0,chatOpen=false;
+const cpn=document.createElement('div');cpn.id='chatp';
+cpn.innerHTML='<div class="ch"><b>💬 Table chat</b><button class="sm sec" id="chx">✕</button></div><div id="clog"></div><div class="cin"><input id="ci" maxlength="200" placeholder="Say something…"><button class="go" id="cs">Send</button></div>';
+document.body.appendChild(cpn);
+function badge(){const n=document.getElementById('chn');if(n)n.innerHTML=unread?'<span class="bd">'+unread+'</span>':''}
+function drawChat(){cpn.style.display=chatOpen?'flex':'none';const l=document.getElementById('clog');if(!st||!chatOpen)return;
+ l.innerHTML=chat.length?chat.map(m=>{const p=st.players[m.from];return `<div class="m ${m.from==st.me?'me':''}"><small style="color:${COL[m.from]}">${p?esc(p.name):'?'}</small>${esc(m.text)}</div>`}).join(''):'<div class="sub" style="text-align:center;margin-top:20px">No messages yet — say hi! 👋</div>';l.scrollTop=l.scrollHeight;badge()}
+function sendChat(){const i=document.getElementById('ci'),t=i.value.trim();if(!t)return;tx({t:'chat',text:t});i.value=''}
+document.getElementById('chx').onclick=()=>{chatOpen=false;drawChat()};document.getElementById('cs').onclick=sendChat;
+document.getElementById('ci').onkeydown=e=>{if(e.key=='Enter')sendChat()};
 render();
 </script></body></html>
